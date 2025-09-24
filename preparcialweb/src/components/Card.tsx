@@ -8,6 +8,8 @@ interface CardProps {
   name: string;
   description: string;
   image: string;
+  books?: string[];
+  
 }
 
 const Card = ({ id, birthDate, name, description, image }: CardProps) => {

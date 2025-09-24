@@ -6,16 +6,23 @@ import { useRouter } from "next/navigation";
 
 
 export default function AuthorForm() {
+
   const [birthDate, setBirthDate] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const router = useRouter();
-  
+
+  const [bookName, setBookName] = useState("");
+  const [isbn, setIsbn] = useState("");
+  const [bookImage, setBookImage] = useState("");
+  const [publishingDate, setPublishingDate] = useState("");
+  const [bookDescription, setBookDescription] = useState("");  
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
+  try {
     const newAuthor = {
       birthDate,
       name,
@@ -23,35 +30,74 @@ export default function AuthorForm() {
       image,
     };
 
-    try {
-      const res = await fetch("http://localhost:8080/api/authors", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const authorRes = await fetch("http://localhost:8080/api/authors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newAuthor),
+    });
+
+    if (!authorRes.ok) throw new Error("Error al crear autor");
+
+    const createdAuthor = await authorRes.json();
+    console.log("Autor creado:", createdAuthor);
+
+    let createdBook = null;
+    if (bookName.trim() !== "") {
+      const newBook = {
+        name: bookName,
+        isbn,
+        image: bookImage,
+        publishingDate,
+        description: bookDescription,
+        editorial: {
+          id: 1006,
+          name: "Pottermore Publishing",
         },
-        body: JSON.stringify(newAuthor),
+      };
+
+      const bookRes = await fetch("http://localhost:8080/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newBook),
       });
 
-      if (!res.ok) {
-        throw new Error("Error al crear autor");
-      }
+      if (!bookRes.ok) throw new Error("Error al crear libro");
 
-      const data = await res.json();
-      console.log("Autor creado:", data);
+      createdBook = await bookRes.json();
+      console.log("Libro creado:", createdBook);
 
-      setBirthDate("");
-      setName("");
-      setDescription("");
-      setImage("");
+      
 
-      alert("Autor creado con éxito");
-      router.push("/authors");
+      const assignRes = await fetch(
+        `http://localhost:8080/api/authors/${createdAuthor.id}/books/${createdBook.id}`,
+        {
+          method: "POST",
+        }
+      );
 
-    } catch (err) {
-      console.error(err);
-      alert("Hubo un error al crear el autor");
+      if (!assignRes.ok) throw new Error("Error al asignar libro al autor");
+
+      console.log("Libro asignado al autor");
     }
-  };
+
+    setBirthDate("");
+    setName("");
+    setDescription("");
+    setImage("");
+    setBookName("");
+    setIsbn("");
+    setBookImage("");
+    setPublishingDate("");
+    setBookDescription("");
+
+    alert("Autor y libro creados con éxito");
+    router.push("/authors");
+  } catch (err) {
+    console.error(err);
+    alert("Hubo un error al crear el autor o el libro");
+  }
+};
+
 
   return (
 <form
@@ -103,6 +149,58 @@ export default function AuthorForm() {
       required
     />
   </div>
+
+  <h3 className="text-xl font-bold text-white mt-4">Añadir Libro</h3>
+
+      <div>
+        <label className="block mb-1 text-white">Título</label>
+        <input
+          type="text"
+          value={bookName}
+          onChange={(e) => setBookName(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">ISBN</label>
+        <input
+          type="text"
+          value={isbn}
+          onChange={(e) => setIsbn(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Imagen del libro</label>
+        <input
+          type="url"
+          value={bookImage}
+          onChange={(e) => setBookImage(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Fecha de publicación</label>
+        <input
+          type="date"
+          value={publishingDate}
+          onChange={(e) => setPublishingDate(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Descripción del libro</label>
+        <textarea
+          value={bookDescription}
+          onChange={(e) => setBookDescription(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+          rows={2}
+        />
+      </div>
 
   <button
     type="submit"
