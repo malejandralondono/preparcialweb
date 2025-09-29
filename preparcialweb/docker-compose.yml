@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  bookstore:
+    image: bookstore:latest
+    container_name: bookstore
+    ports:
+      - "8080:8080"   # expone el puerto 8080 del contenedor en 8080 de tu PC
+    restart: always
+
+  preparcialweb:
+    image: preparcialweb:latest
+    container_name: preparcialweb
+    ports:
+      - "3000:3000"   # expone el puerto 3000 en tu PC
+    restart: always
+    depends_on:
+      - bookstore     # primero se levanta bookstore

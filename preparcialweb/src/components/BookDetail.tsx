@@ -31,7 +31,6 @@ export default function BookDetailPage() {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Estado del formulario de review
   const [name, setName] = useState("");
   const [source, setSource] = useState("");
   const [description, setDescription] = useState("");
@@ -70,7 +69,7 @@ export default function BookDetailPage() {
         setName("");
         setSource("");
         setDescription("");
-        fetchBook(); // recargar datos con la nueva review
+        fetchBook();
       })
       .catch((err) => {
         console.error("Error al enviar reseña:", err);
@@ -130,7 +129,6 @@ export default function BookDetailPage() {
           <p>No hay reseñas todavía.</p>
         )}
 
-        {/* Formulario para agregar reseña */}
         <form onSubmit={handleAddReview} className="mt-6 space-y-4">
           <h3 className="text-xl font-semibold">Agregar reseña</h3>
           <input
