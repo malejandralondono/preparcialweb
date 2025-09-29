@@ -13,6 +13,12 @@ const id = params?.id as string;
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
 
+  const [bookName, setBookName] = useState("");
+  const [isbn, setIsbn] = useState("");
+  const [bookImage, setBookImage] = useState("");
+  const [publishingDate, setPublishingDate] = useState("");
+  const [bookDescription, setBookDescription] = useState(""); 
+
   useEffect(() => {
     const fetchAuthor = async () => {
       try {
@@ -34,33 +40,96 @@ const id = params?.id as string;
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const updatedAuthor = { birthDate, name, description, image };
+  const updatedAuthor = { birthDate, name, description, image };
 
-    try {
-      const res = await fetch(`http://localhost:8080/api/authors/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedAuthor),
-      });
+  try {
+    const res = await fetch(`http://localhost:8080/api/authors/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedAuthor),
+    });
 
-      if (!res.ok) throw new Error("Error al actualizar autor");
+    if (!res.ok) throw new Error("Error al actualizar autor");
+    const updated = await res.json();
+    console.log("Autor actualizado:", updated);
 
-      alert("Autor actualizado con éxito");
-      router.push("/authors");
-    } catch (err) {
-      console.error(err);
-      alert("Hubo un error al actualizar");
+    if (bookName.trim() !== "" || isbn.trim() !== "") {
+      let bookToAssign = null;
+
+      const searchRes = await fetch(
+        `http://localhost:8080/api/books?isbn=${isbn}`
+      );
+
+      if (!searchRes.ok) throw new Error("Error al buscar libro");
+
+      const foundBooks = await searchRes.json();
+
+      if (foundBooks.length > 0) {
+        bookToAssign = foundBooks[0];
+        console.log("Libro ya existente:", bookToAssign);
+      } else {
+        const newBook = {
+          name: bookName,
+          isbn,
+          image: bookImage,
+          publishingDate,
+          description: bookDescription,
+          editorial: {
+            id: 1006,
+            name: "Pottermore Publishing",
+          },
+        };
+
+        const bookRes = await fetch("http://localhost:8080/api/books", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newBook),
+        });
+
+        if (!bookRes.ok) throw new Error("Error al crear libro");
+
+        bookToAssign = await bookRes.json();
+        console.log("Libro creado:", bookToAssign);
+      }
+
+      const assignRes = await fetch(
+        `http://localhost:8080/api/authors/${id}/books/${bookToAssign.id}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!assignRes.ok) throw new Error("Error al asignar libro al autor");
+
+      console.log("Libro asignado al autor");
     }
-  };
+
+    alert("Autor actualizado con éxito");
+    router.push("/authors");
+  } catch (err) {
+    console.error(err);
+    alert("Hubo un error al actualizar autor o asignar libro");
+  }
+
+  setBirthDate("");
+  setName("");
+  setDescription("");
+  setImage("");
+  setBookName("");
+  setIsbn("");
+  setBookImage("");
+  setPublishingDate("");
+  setBookDescription("");
+};
 
   return (
 <form
   onSubmit={handleSubmit}
   className="max-w-md mx-auto p-6 bg-gradient-to-br from-purple-500 to-purple-700 shadow-lg rounded-lg space-y-4"
 >
-  <h2 className="text-2xl font-bold text-white">Actualizar autor</h2>
+  <h2 className="text-2xl font-bold text-white">Crear nuevo autor</h2>
 
   <div>
     <label className="block mb-1 text-white">Nombre</label>
@@ -106,11 +175,63 @@ const id = params?.id as string;
     />
   </div>
 
+  <h3 className="text-xl font-bold text-white mt-4">Añadir Libro</h3>
+
+      <div>
+        <label className="block mb-1 text-white">Título</label>
+        <input
+          type="text"
+          value={bookName}
+          onChange={(e) => setBookName(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">ISBN</label>
+        <input
+          type="text"
+          value={isbn}
+          onChange={(e) => setIsbn(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Imagen del libro</label>
+        <input
+          type="url"
+          value={bookImage}
+          onChange={(e) => setBookImage(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Fecha de publicación</label>
+        <input
+          type="date"
+          value={publishingDate}
+          onChange={(e) => setPublishingDate(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-white">Descripción del libro</label>
+        <textarea
+          value={bookDescription}
+          onChange={(e) => setBookDescription(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-white text-gray-900"
+          rows={2}
+        />
+      </div>
+
   <button
     type="submit"
     className="bg-purple-900 text-white px-4 py-2 rounded hover:bg-purple-800 transition"
   >
-    Actualizar Autor
+    Crear Autor
   </button>
 </form>
   );

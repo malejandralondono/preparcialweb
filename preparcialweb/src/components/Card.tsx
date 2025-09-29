@@ -19,25 +19,44 @@ const Card = ({ id, birthDate, name, description, image }: CardProps) => {
     router.push(`/authors/${id}/edit`);
   };
 
-  const handleDelete = () => {
-  fetch(`http://localhost:8080/api/authors/${id}`, {
-    method: "DELETE",
-  })
-    .then(async (res) => {
-      if (res.ok) {
-        alert("Autor eliminado correctamente"); 
-        window.location.reload(); 
-      } else {
-        const errorText = await res.text();
-        console.error("rror al eliminar autor. Status:", res.status, "Detalle:", errorText);
-        alert("Hubo un error al eliminar el autor");
+const handleDelete = async () => {
+  try {
+    const booksRes = await fetch(`http://localhost:8080/api/authors/${id}/books`);
+    if (!booksRes.ok) throw new Error("Error al obtener libros asociados");
+
+    const books = await booksRes.json();
+
+    for (const book of books) {
+      const unassignRes = await fetch(
+        `http://localhost:8080/api/authors/${id}/books/${book.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!unassignRes.ok) {
+        console.error(`Error al desasignar libro ${book.id}`);
+        throw new Error("No se pudo desasignar un libro");
       }
-    })
-    .catch((err) => {
-      console.error("Error al eliminar autor:", err);
-      alert("Error de conexión al intentar eliminar el autor");
+    }
+
+    const deleteRes = await fetch(`http://localhost:8080/api/authors/${id}`, {
+      method: "DELETE",
     });
+
+    if (!deleteRes.ok) {
+      const errorText = await deleteRes.text();
+      console.error("Error al eliminar autor. Status:", deleteRes.status, "Detalle:", errorText);
+      alert("Hubo un error al eliminar el autor");
+      return;
+    }
+
+    alert("Autor y sus relaciones con libros eliminados correctamente");
+    window.location.reload();
+  } catch (err) {
+    console.error("Error al eliminar autor:", err);
+    alert("Error de conexión al intentar eliminar el autor");
+  }
 };
+
 
 
   return (

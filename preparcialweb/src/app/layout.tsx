@@ -27,6 +27,7 @@ export default function RootLayout({
   const routes = [
     { name: "Usuarios", path: "/authors" },
     { name: "Crear Usuario", path: "/new" },
+    { name: "Libros", path: "/books" },
  ];
   return (
     <html lang="en">

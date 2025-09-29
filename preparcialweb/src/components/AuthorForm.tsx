@@ -41,8 +41,22 @@ export default function AuthorForm() {
     const createdAuthor = await authorRes.json();
     console.log("Autor creado:", createdAuthor);
 
-    let createdBook = null;
-    if (bookName.trim() !== "") {
+   let createdBook = null;
+
+try {
+  if (bookName.trim() !== "") {
+    const searchRes = await fetch(
+      `http://localhost:8080/api/books?isbn=${isbn}`
+    );
+
+    if (!searchRes.ok) throw new Error("Error al buscar libro");
+
+    const foundBooks = await searchRes.json();
+
+    if (foundBooks.length > 0) {
+      createdBook = foundBooks[0];
+      console.log("Libro ya existente:", createdBook);
+    } else {
       const newBook = {
         name: bookName,
         isbn,
@@ -65,36 +79,39 @@ export default function AuthorForm() {
 
       createdBook = await bookRes.json();
       console.log("Libro creado:", createdBook);
-
-      
-
-      const assignRes = await fetch(
-        `http://localhost:8080/api/authors/${createdAuthor.id}/books/${createdBook.id}`,
-        {
-          method: "POST",
-        }
-      );
-
-      if (!assignRes.ok) throw new Error("Error al asignar libro al autor");
-
-      console.log("Libro asignado al autor");
     }
 
-    setBirthDate("");
-    setName("");
-    setDescription("");
-    setImage("");
-    setBookName("");
-    setIsbn("");
-    setBookImage("");
-    setPublishingDate("");
-    setBookDescription("");
+    const assignRes = await fetch(
+      `http://localhost:8080/api/authors/${createdAuthor.id}/books/${createdBook.id}`,
+      {
+        method: "POST",
+      }
+    );
 
-    alert("Autor y libro creados con éxito");
-    router.push("/authors");
+    if (!assignRes.ok) throw new Error("Error al asignar libro al autor");
+
+    console.log("Libro asignado al autor");
+  }
+
+  setBirthDate("");
+  setName("");
+  setDescription("");
+  setImage("");
+  setBookName("");
+  setIsbn("");
+  setBookImage("");
+  setPublishingDate("");
+  setBookDescription("");
+
+  alert("Autor y libro creados/asignados con éxito");
+  router.push("/authors");
+} catch (err) {
+  console.error(err);
+  alert("Hubo un error al crear o asignar el libro");
+}
   } catch (err) {
     console.error(err);
-    alert("Hubo un error al crear el autor o el libro");
+    alert("Hubo un error al crear el autor");
   }
 };
 

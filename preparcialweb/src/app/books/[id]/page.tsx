@@ -1,9 +1,10 @@
-import BookForm from "@/components/BoofForm";
+import BookDetail from "@/components/BookDetail";
 
 export default function Page() {
   return (
     <main className="p-8 bg-purple-300">
-      <BookForm />
+      <BookDetail />;
     </main>
   );
 }
+
